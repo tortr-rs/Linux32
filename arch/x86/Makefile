@@ -26,6 +26,7 @@
 # Identifier: Chamesle-Certification-1.0
 #
 # Unified Makefile for i386 (32-bit x86 only in this fork)
+# Defconfigs: i386_defconfig (desktop/server), i386_embedded_defconfig (embedded/IoT)
 
 KBUILD_DEFCONFIG := i386_defconfig
 

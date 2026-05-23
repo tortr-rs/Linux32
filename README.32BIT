@@ -34,6 +34,8 @@ that still need 32-bit kernel support as upstream Linux phases it out.
 | Architecture | Build command | Notes |
 |---|---|---|
 | **x86 (i386)** | `make ARCH=i386 defconfig && make ARCH=i386 -j$(nproc)` | Primary target; use `i386_defconfig` |
+| **x86 embedded** | `make ARCH=i386 i386_embedded_defconfig && make ARCH=i386 -j$(nproc)` | Low-RAM industrial/IoT x86 |
+| **ARM embedded** | `make ARCH=arm linux32_embedded_defconfig && make ARCH=arm -j$(nproc)` | ARMv7 starting point (QEMU virt) |
 | **ARM** | `make ARCH=arm <board>_defconfig && make ARCH=arm -j$(nproc)` | 32-bit ARM only (`arch/arm/`) |
 | **MIPS** | `make ARCH=mips <board>_defconfig && make ARCH=mips -j$(nproc)` | 64-bit MIPS builds disabled |
 | **PowerPC** | `make ARCH=powerpc <board>_defconfig && make ARCH=powerpc -j$(nproc)` | PPC32 only |
@@ -64,6 +66,41 @@ make ARCH=i386 -j$(nproc)
 ./scripts/build-32bit-kernel.sh
 ```
 
+## Embedded / IoT builds
+
+This fork adds configs tuned for **low RAM**, **flash storage**, and **headless** 32-bit
+targets (serial console, MTD/SPI NOR, SquashFS/JFFS2/UBIFS, smaller log buffer,
+100 Hz tick, CMA for DMA).
+
+**x86 embedded (Geode, Vortex86, industrial PC):**
+
+```bash
+make ARCH=i386 i386_embedded_defconfig
+make ARCH=i386 -j$(nproc)
+# or
+./scripts/build-embedded-32bit-kernel.sh
+```
+
+**ARM 32-bit embedded (starting point — pick your SoC in menuconfig):**
+
+```bash
+make ARCH=arm linux32_embedded_defconfig
+make ARCH=arm -j$(nproc)
+# or
+./scripts/build-embedded-32bit-kernel.sh arm
+```
+
+**Merge embedded options into an existing board config:**
+
+```bash
+make ARCH=arm your_board_defconfig
+./scripts/kconfig/merge_config.sh -m .config kernel/configs/linux32-embedded.config
+make ARCH=arm olddefconfig
+make ARCH=arm -j$(nproc)
+```
+
+Enable `CONFIG_LINUX32_EMBEDDED` in menuconfig (*General setup*) to mark an embedded profile.
+
 On a 64-bit host you need a cross-compiler or multilib toolchain:
 
 ```bash
@@ -82,6 +119,8 @@ make ARCH=i386 CROSS_COMPILE=i686-linux-gnu- -j$(nproc)
 3. **Removed** `x86_64_defconfig` and `sparc64_defconfig`
 4. **Version suffix** set to `-32bit` in the top-level Makefile (`EXTRAVERSION`)
 5. **Build guards** reject `ARCH=x86_64`, `ARCH=sparc64`, and removed architectures
+6. **Embedded profile** — `i386_embedded_defconfig`, `linux32_embedded_defconfig` (ARM),
+   and `kernel/configs/linux32-embedded.config` merge fragment
 
 ## Fork maintenance notes
 

@@ -215,6 +215,19 @@ config THREAD_INFO_IN_TASK
 
 menu "General setup"
 
+config LINUX32_EMBEDDED
+	bool "Linux32 embedded 32-bit profile"
+	depends on !64BIT
+	default n
+	help
+	  Enable tuning aimed at embedded, IoT, and industrial 32-bit systems
+	  with limited RAM and storage. Use the matching defconfig for your
+	  architecture (e.g. i386_embedded_defconfig) or merge
+	  kernel/configs/linux32-embedded.config into an existing .config.
+
+	  Typical effects: lower timer tick rate, smaller log buffer, CMA for
+	  DMA buffers, common flash filesystems, and fewer desktop-only features.
+
 config BROKEN
 	bool
 	help
