@@ -1,0 +1,40 @@
+# copyright Koubba Mohamed Rayan
+#
+# Chamesle Certification v1.0
+# Copyright (C) 2026 Chamesle contributors
+#
+# This certification is granted to projects that are fully open source,
+# non-profit in purpose, and community-driven in operation.
+#
+# Certification Requirements:
+# 1. Full source code is publicly available.
+# 2. Project governance is transparent and community accessible.
+# 3. No proprietary-only core component is required for normal use.
+# 4. Attribution and notice text are preserved in distributed versions.
+# 5. Public contribution pathways are available (issues, docs, patches).
+#
+# Certification Revocation:
+# Certification may be revoked if the project no longer meets these
+# requirements, including closure of source, removal of community process,
+# or conversion to a profit-first restricted model.
+#
+# Scope Notice:
+# This certification is a Chamesle project policy statement and does not
+# replace legal advice.
+#
+# Identifier: Chamesle-Certification-1.0
+#
+# SUBARCH tells the usermode build what the underlying arch is.  That is set
+# first, and if a usermode build is happening, the "ARCH=um" on the command
+# line overrides the setting of ARCH below.  If a native build is happening,
+# then ARCH is assigned, getting whatever value it gets normally, and
+# SUBARCH is subsequently ignored.
+
+SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
+				  -e s/sun4u/sparc/ \
+				  -e s/sun4m/sparc/ \
+				  -e /^arm64$$/!s/arm.*/arm/ -e s/sa110/arm/ \
+				  -e s/^aarch64$$/arm/ \
+				  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+				  -e s/sh[234].*/sh/ -e s/riscv32/riscv/ \
+				  -e s/riscv64/riscv/)
