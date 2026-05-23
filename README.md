@@ -35,6 +35,9 @@ that still need 32-bit kernel support as upstream Linux phases it out.
 |---|---|---|
 | **x86 (i386)** | `make ARCH=i386 defconfig && make ARCH=i386 -j$(nproc)` | Primary target; use `i386_defconfig` |
 | **x86 embedded** | `make ARCH=i386 i386_embedded_defconfig && make ARCH=i386 -j$(nproc)` | Low-RAM industrial/IoT x86 |
+| **x86 ultra-weak** | `i386_ultra_weak_defconfig` | 16–64 MB RAM, 486+ class |
+| **x86 legacy** | `i386_legacy_defconfig` | Old PCs (PATA, NE2000, VESA fb) |
+| **x86 server** | `i386_server_defconfig` | 32-bit SMP + PAE, RAID, bonding |
 | **ARM embedded** | `make ARCH=arm linux32_embedded_defconfig && make ARCH=arm -j$(nproc)` | ARMv7 starting point (QEMU virt) |
 | **ARM** | `make ARCH=arm <board>_defconfig && make ARCH=arm -j$(nproc)` | 32-bit ARM only (`arch/arm/`) |
 | **MIPS** | `make ARCH=mips <board>_defconfig && make ARCH=mips -j$(nproc)` | 64-bit MIPS builds disabled |
@@ -100,6 +103,19 @@ make ARCH=arm -j$(nproc)
 ```
 
 Enable `CONFIG_LINUX32_EMBEDDED` in menuconfig (*General setup*) to mark an embedded profile.
+
+## Linux32 tool — embedded without Buildroot/Yocto
+
+One script builds **kernel + busybox rootfs + QEMU boot**:
+
+```bash
+./scripts/linux32 profiles          # list: ultra-weak, legacy, embedded, server, embedded-arm
+./scripts/linux32 run embedded        # full pipeline: config, build, rootfs, qemu
+./scripts/linux32 image server        # kernel + initramfs in output/linux32/server/
+./scripts/linux32 rootfs ultra-weak   # only the minimal rootfs cpio
+```
+
+Requires WSL/Linux: `build-essential`, `gcc-multilib`, `busybox-static` (or auto-download).
 
 On a 64-bit host you need a cross-compiler or multilib toolchain:
 
