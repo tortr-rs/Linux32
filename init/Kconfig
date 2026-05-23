@@ -228,6 +228,19 @@ config LINUX32_EMBEDDED
 	  Typical effects: lower timer tick rate, smaller log buffer, CMA for
 	  DMA buffers, common flash filesystems, and fewer desktop-only features.
 
+	  Fragments (merge with scripts/merge-linux32-config.sh):
+	    embedded   — kernel/configs/linux32-embedded.config
+	    tiny       — kernel/configs/linux32-tiny.config
+	    flash      — kernel/configs/linux32-flash-root.config
+	    rt         — kernel/configs/linux32-preempt-rt.config
+	    server     — kernel/configs/linux32-server.config
+	    legacy     — kernel/configs/linux32-legacy.config
+	    ultra-weak — kernel/configs/linux32-ultra-weak.config
+
+	  One-command profiles (kernel + busybox rootfs, no Buildroot/Yocto):
+	    ./scripts/linux32 profiles
+	    ./scripts/linux32 run <ultra-weak|legacy|embedded|server|embedded-arm>
+
 config BROKEN
 	bool
 	help

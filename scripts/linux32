@@ -1,0 +1,143 @@
+#!/bin/sh
+# Linux32 — one tool for kernel + rootfs + boot (easier than Buildroot/Yocto)
+# copyright Koubba Mohamed Rayan — Chamesle-Certification-1.0
+#
+# Usage:
+#   ./scripts/linux32 profiles
+#   ./scripts/linux32 config  <profile>     # kernel .config only
+#   ./scripts/linux32 build   <profile>     # kernel only
+#   ./scripts/linux32 rootfs  <profile>     # minimal busybox rootfs
+#   ./scripts/linux32 image   <profile>     # kernel + initramfs cpio
+#   ./scripts/linux32 run     <profile>     # build if needed, boot QEMU
+#
+# Profiles: ultra-weak, legacy, embedded, server, embedded-arm
+
+set -eu
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+. "$ROOT/scripts/linux32-lib.sh"
+
+CMD="${1:-help}"
+PROFILE="${2:-embedded}"
+shift 2 2>/dev/null || true
+
+JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
+
+do_config() {
+	linux32_load_profile "$PROFILE"
+	export ARCH
+	echo "==> profile: $PROFILE ($PROFILE_DESC)"
+	echo "==> defconfig: $DEFCONFIG ARCH=$ARCH"
+	make ARCH="$ARCH" "$DEFCONFIG"
+	if [ -n "${FRAGMENTS:-}" ]; then
+		for frag in $FRAGMENTS; do
+			"$ROOT/scripts/merge-linux32-config.sh" "$frag"
+		done
+	fi
+}
+
+do_build() {
+	do_config
+	export ARCH
+	echo "==> building kernel (-j$JOBS)"
+	make ARCH="$ARCH" -j"$JOBS"
+}
+
+do_rootfs() {
+	"$ROOT/scripts/linux32-rootfs.sh" "$PROFILE"
+}
+
+do_image() {
+	do_build
+	do_rootfs
+	linux32_load_profile "$PROFILE"
+	img="$LINUX32_OUT/$PROFILE"
+	mkdir -p "$img"
+	k=$(linux32_kernel_image)
+	cp "$k" "$img/kernel" 2>/dev/null || cp "$k" "$img/"
+	echo "==> image ready in $img/"
+	ls -la "$img/"
+}
+
+do_run() {
+	do_image
+	linux32_load_profile "$PROFILE"
+	k=$(linux32_kernel_image)
+	cpio="$LINUX32_OUT/$PROFILE/rootfs.cpio.gz"
+	mem="${QEMU_MEM:-256M}"
+	smp="${QEMU_SMP:-1}"
+	case "$ARCH" in
+	i386|x86)
+		if ! command -v qemu-system-i386 >/dev/null 2>&1; then
+			echo "install: sudo apt install qemu-system-x86" >&2
+			exit 1
+		fi
+		echo "==> qemu-system-i386 -m $mem (Ctrl+A X to quit)"
+		exec qemu-system-i386 -m "$mem" -smp "$smp" \
+			-kernel "$k" -initrd "$cpio" \
+			-append "$KERNEL_CMDLINE" \
+			-nographic -no-reboot
+		;;
+	arm)
+		if ! command -v qemu-system-arm >/dev/null 2>&1; then
+			echo "install: sudo apt install qemu-system-arm" >&2
+			exit 1
+		fi
+		echo "==> qemu-system-arm (Ctrl+A X to quit)"
+		exec qemu-system-arm \
+			-machine "${QEMU_MACHINE:-virt}" \
+			-cpu "${QEMU_CPU:-cortex-a15}" \
+			-m "$mem" -smp "$smp" \
+			-kernel "$k" -initrd "$cpio" \
+			-append "$KERNEL_CMDLINE" \
+			-nographic -no-reboot
+		;;
+	*)
+		echo "QEMU run not wired for ARCH=$ARCH" >&2
+		exit 1
+		;;
+	esac
+}
+
+case "$CMD" in
+profiles|profile|list)
+	linux32_list_profiles
+	;;
+config)
+	do_config
+	;;
+build)
+	do_build "$@"
+	;;
+rootfs)
+	do_rootfs
+	;;
+image)
+	do_image
+	;;
+run|boot|qemu)
+	do_run
+	;;
+help|*)
+	cat <<EOF
+Linux32 — build 32-bit Linux without Buildroot/Yocto
+
+  ./scripts/linux32 profiles              list hardware profiles
+  ./scripts/linux32 config  <profile>   generate kernel config
+  ./scripts/linux32 build   <profile>   compile kernel
+  ./scripts/linux32 rootfs  <profile>   busybox rootfs + cpio
+  ./scripts/linux32 image   <profile>   kernel + rootfs bundle
+  ./scripts/linux32 run     <profile>   boot in QEMU
+
+Profiles:
+$(linux32_list_profiles)
+
+Examples:
+  ./scripts/linux32 run ultra-weak      # 32 MB QEMU, tiny kernel
+  ./scripts/linux32 run embedded        # industrial/IoT
+  ./scripts/linux32 run legacy          # old PC hardware drivers
+  ./scripts/linux32 run server          # SMP + PAE server kernel
+EOF
+	;;
+esac

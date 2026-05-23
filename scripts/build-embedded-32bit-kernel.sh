@@ -35,8 +35,12 @@ arm)
 	ARCH=arm
 	DEFCONFIG=linux32_embedded_defconfig
 	;;
+mips)
+	ARCH=mips
+	DEFCONFIG=linux32_embedded_defconfig
+	;;
 *)
-	echo "Unknown target: $TARGET (use i386 or arm)" >&2
+	echo "Unknown target: $TARGET (use i386, arm, or mips)" >&2
 	exit 1
 	;;
 esac

@@ -1,0 +1,4 @@
+::sysinit:/bin/sh /init
+::respawn:/bin/sh
+::ctrlaltdel:/bin/sh -c reboot
+::shutdown:/bin/sh -c "umount -a -r"

@@ -188,3 +188,6 @@ sphinx_*/
 
 # bc language scripts (not LLVM bitcode)
 !kernel/time/timeconst.bc
+
+# Linux32 build output (rootfs, images, busybox cache)
+/output/linux32/

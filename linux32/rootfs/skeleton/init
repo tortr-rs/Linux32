@@ -1,0 +1,29 @@
+#!/bin/sh
+# Minimal /init for Linux32 rootfs — no systemd, no buildroot required
+# copyright Koubba Mohamed Rayan — Chamesle-Certification-1.0
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || mount -t tmpfs devtmpfs /dev
+mkdir -p /dev/pts /tmp /run
+mount -t devpts devpts /dev/pts 2>/dev/null
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /run
+
+hostname linux32
+if [ -x /sbin/mdev ]; then
+	/sbin/mdev -s
+elif [ -x /bin/mdev ]; then
+	/bin/mdev -s
+fi
+
+# Network: try DHCP on common interfaces
+for iface in eth0 enp0s3 ens3; do
+	if [ -d "/sys/class/net/$iface" ]; then
+		udhcpc -i "$iface" -q -t 5 -n 2>/dev/null &
+		break
+	fi
+done
+
+echo "Linux32 ready — profile: ${LINUX32_PROFILE:-unknown}"
+exec /bin/sh
